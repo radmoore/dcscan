@@ -75,7 +75,7 @@ def split_fasta(config)
         in_file_no = 0
       end
       in_file_no += 1
-      print "\rSplitting [part %8d] %#{width}d... done." % [outfiles.size, in_file_no]
+      print "\rSplitting [part %8d] %#{width}d... " % [outfiles.size, in_file_no]
     end
     out_file.puts line
   end
