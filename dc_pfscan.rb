@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/ruby1.9.1
 require 'thread'
 require 'yaml'
 require 'fileutils'
@@ -49,9 +49,9 @@ def split_fasta(config)
   fasta_basename = File.basename(fasta, ".*") 
   in_file_no = 0
   out_file = File.new("#{fadir}/#{fasta_basename}-#{outfiles.size}.fa", "w")
-  puts "A. PERFORMING SPLIT"
+  puts "\nA. PERFORMING SPLIT"
   puts "="*25
-  print "\rSplitting [part %8d] %s [%#{width}d]... " % [outfiles.size,  config[:files][:fasta], in_file_no]
+  print "\rSplitting [part %8d] %#{width}d... " % [outfiles.size, in_file_no]
   IO.foreach(fasta) do |line|
     if (line[0] == '>')
       if (in_file_no >= chunk_size)
@@ -59,24 +59,24 @@ def split_fasta(config)
         out_file.close()
         outfiles << out_file
         out_file = File.new("#{fadir}/#{fasta_basename}-#{outfiles.size}.fa", "w")
-        puts "\rSplitting [part %8d] %s [%#{width}d]... done." % [outfiles.size,  config[:files][:fasta], in_file_no]
+        puts "\rSplitting [part %8d] %#{width}d... done." % [outfiles.size, in_file_no]
         in_file_no = 0
       end
       in_file_no += 1
-      print "\rSplitting [part %8d] %s [%#{width}d]... done." % [outfiles.size,  config[:files][:fasta], in_file_no]
+      print "\rSplitting [part %8d] %#{width}d... done." % [outfiles.size, in_file_no]
     end
     out_file.puts line
   end
   out_file.close()
   outfiles << out_file
-  print "\rSplitting [part %8d] %s [%#{width}d]... " % [outfiles.size,  config[:files][:fasta], in_file_no]
+  print "\rSplitting [part %8d] %#{width}d... " % [outfiles.size, in_file_no]
   puts "done."
   return outfiles
 end
 
 # PERFORM SCAN ON CHUNKS
 def run_pfamscan(infiles, config)
-  puts "B. PERFORMING SCAN"
+  puts "\nB. PERFORMING SCAN"
   puts "="*25
   pfsdir = "#{config[:files][:wdir]}/#{config[:files][:pfsdir]}"
   if config[:files][:wipe] 
@@ -121,7 +121,7 @@ end
 
 # MERGE SCAN RESULTS
 def merge_results(infiles, config)
-  puts "C. MERGING RESULTS"
+  puts "\nC. MERGING RESULTS"
   puts "="*25
   if (config[:files][:resultfile].nil?)
     final_results = File.basename(config[:files][:fasta], ".*")
@@ -130,18 +130,20 @@ def merge_results(infiles, config)
     outfile = File.new(config[:files][:resultfile], "w")
   end
   first = true
-  width = infiles.digit_no
+  width = infiles.size.digit_no
+  current_merge = 0
   STDERR.print "Merging result files... "
   infiles.each do |f|
     IO.foreach(f) do |line|
       next if /^$/.match(line)
       next if line[1] == '#' && (not first)
       outfile.puts line
-      print "\rMerging result %#{width}d of %d... " % [current_merge+=1, infiles.size]
     end
+    print "\rMerging result %#{width}d of %d... " % [current_merge+=1, infiles.size]
     first = false
   end
-  puts "Merging result %#{width}d of %d... done." % [current_merge+=1, infiles.size]
+  puts "\rMerging result %#{width}d of %d... done." % [current_merge, infiles.size]
+  puts ""
   outfile.close()
 end
 
