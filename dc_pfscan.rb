@@ -136,7 +136,7 @@ def merge_results(infiles, config)
   infiles.each do |f|
     IO.foreach(f) do |line|
       next if /^$/.match(line)
-      next if line[1] == '#' && (not first)
+      next if line[0] == '#' && (not first)
       outfile.puts line
     end
     print "\rMerging result %#{width}d of %d... " % [current_merge+=1, infiles.size]
