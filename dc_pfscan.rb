@@ -5,14 +5,26 @@ require 'fileutils'
 
 # dc_pfscan.rb
 #
-# A simple threaded wrapper around the pfam_scan.pl utility for scanning
+# A simple threaded wrapper around the pfam_scan utility for scanning
 # against very large sequence files. Uses a divide and conquer approach.
 # First splits large fasta into chunks of a defined max. size, then performs 
 # the scan on these chunks in seperate threads using a job queue.
 # Result files of each chunk are merged when the queue is empty.
 # Configuration is done with a YAML file.
+#
+# More info on pfam_scan:
+# ftp://ftp.sanger.ac.uk/pub/databases/Pfam/Tools/
 # 
 # This is part of the RADS annotation pipeline
+#
+# NOTE:
+# The consequence of running seperate threads is that the order of
+# the output will be jumbled (that is, as the runtime of pfam_scan
+# will depend on sequence length & composition, number of hits etc
+# chunks that were started later may be finished earlier.)
+# That is to say that the *order* of hits obtained when running dc_pfscan
+# and pfam_scan will likely be different.
+
 
 # Mixin to count number of digits
 # (for clean output)
