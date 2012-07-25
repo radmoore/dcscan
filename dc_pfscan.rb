@@ -1,17 +1,28 @@
 #!/usr/bin/env ruby
-
 require 'thread'
 require 'yaml'
 require 'fileutils'
 
-# mixin to count number of digits
+# dc_pfscan.rb
+#
+# A simple threaded wrapper around the pfam_scan.pl utility for scanning
+# against very large sequence files. Uses a divide and conquer approach.
+# First splits large fasta into chunks of a defined max. size, then performs 
+# the scan on these chunks in seperate threads using a job queue.
+# Result files of each chunk are merged when the queue is empty.
+# Configuration is done with a YAML file.
+# 
+# This is part of the RADS annotation pipeline
+
+# Mixin to count number of digits
+# (for clean output)
 class Integer
   def digit_no
     self.to_s.size
   end
 end
 
-
+# READ YAML
 def read_config
   raw_config = File.read(ARGV[0])
   config = YAML.load(raw_config)
@@ -22,6 +33,7 @@ def read_config
   return config
 end
 
+# SPLIT FASTA into CHUNKS
 def split_fasta(config)
   fadir = "#{config[:files][:wdir]}/#{config[:files][:fadir]}"
   chunk_size = config[:jobcontrol][:chunk_size]
@@ -60,7 +72,7 @@ def split_fasta(config)
   return outfiles
 end
 
-
+# PERFORM SCAN ON CHUNKS
 def run_pfamscan(infiles, config)
   pfsdir = "#{config[:files][:wdir]}/#{config[:files][:pfsdir]}"
   if config[:files][:wipe] 
@@ -103,7 +115,7 @@ def run_pfamscan(infiles, config)
   
 end
 
-
+# MERGE SCAN RESULTS
 def merge_results(infiles, config)
   if (config[:files][:resultfile].nil?)
     final_results = File.basename(config[:files][:fasta], ".*")
@@ -133,8 +145,4 @@ def main
   merge_results(outfiles, config)
 end
 
-if (ARGV.length == 1)
-  main()
-else
-  STDERR.puts "Usage: #{$0} <path-to-config.yaml>"
-end
+(ARGV.length == 1) ? main() : STDERR.puts "Usage: #{$0} <path-to-config.yaml>"
