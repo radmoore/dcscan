@@ -1,0 +1,31 @@
+# For typical runs, only adjust the files section
+:files:
+  # working dir (this will be used for all paths below)
+  :wdir: '.'
+  # fasta with sequences
+  :fasta: 'pfamseq_snip.fa'
+  # pfam file (model files)
+  :dir:  'pfam_scan_db'
+  # tmp folder with fasta chunks
+  :fadir:  'fas'
+  # tmp folder with pfsout files (pfamscan output chunks)
+  :pfsdir:  'pfs'
+  # the final outfile (if not set, will be == inputfile with 'pfsout' suffix)
+  :resultfile:
+  # remove all temp. files (chunks) and folders (true of false)
+  :wipe: true
+
+# no need to adjust here
+:jobcontrol: 
+  # number of sequences per chunk
+  :chunk_size: 100
+  # max number of parallel threads
+  :max_thread: 8      
+
+:pfamscan:
+  # pfam scan binary (path-to-executable if not in $PATH)
+  :bin:  pfamScan
+  # map Pfam hits to clans
+  :clans: true
+  # max. number of CPUs (per thread)
+  :cpu:  1
