@@ -49,9 +49,12 @@ def split_fasta(config)
   fasta_basename = File.basename(fasta, ".*") 
   in_file_no = 0
   out_file = File.new("#{fadir}/#{fasta_basename}-#{outfiles.size}.fa", "w")
+  puts "A. PERFORMING SPLIT"
+  puts "="*25
   print "\rSplitting [part %8d] %s [%#{width}d]... " % [outfiles.size,  config[:files][:fasta], in_file_no]
   IO.foreach(fasta) do |line|
-    if (/^>.+/.match(line))
+    #if (/^>.+/.match(line))
+    if (line[0] == '>')
       if (in_file_no >= chunk_size)
         out_file.puts ""
         out_file.close()
@@ -74,6 +77,8 @@ end
 
 # PERFORM SCAN ON CHUNKS
 def run_pfamscan(infiles, config)
+  puts "B. PERFORMING SCAN"
+  puts "="*25
   pfsdir = "#{config[:files][:wdir]}/#{config[:files][:pfsdir]}"
   if config[:files][:wipe] 
     if File.exists?(pfsdir) 
@@ -117,6 +122,8 @@ end
 
 # MERGE SCAN RESULTS
 def merge_results(infiles, config)
+  puts "C. MERGING RESULTS"
+  puts "="*25
   if (config[:files][:resultfile].nil?)
     final_results = File.basename(config[:files][:fasta], ".*")
     outfile = File.new("#{final_results}.pfsout", "w")
@@ -124,25 +131,31 @@ def merge_results(infiles, config)
     outfile = File.new(config[:files][:resultfile], "w")
   end
   first = true
+  width = infiles.digit_no
   STDERR.print "Merging result files... "
   infiles.each do |f|
     IO.foreach(f) do |line|
       next if /^$/.match(line)
       next if /^#.*/.match(line) && (not first)
       outfile.puts line
+      print "\rMerging result %#{width}d of %d... " % [current_merge+=1, infiles.size]
     end
     first = false
   end
+  puts "Merging result %#{width}d of %d... done." % [current_merge+=1, infiles.size]
   outfile.close()
-  STDERR.puts "done."
 end
 
 
 def main
+  if RUBY_VERSION.to_f < 1.9
+    STDERR.puts "Requires >= Ruby 1.9 (running version #{RUBY_VERSION})"
+    exit(-1)
+  end
   config = read_config()
   outfiles = split_fasta(config)
   outfiles = run_pfamscan(outfiles, config)
   merge_results(outfiles, config)
 end
 
-(ARGV.length == 1) ? main() : STDERR.puts "Usage: #{$0} <path-to-config.yaml>"
+if ARGV.length == 1 then main() else puts "Usage: #{$0} <path-to-config.yaml>" end
