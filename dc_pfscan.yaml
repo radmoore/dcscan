@@ -3,9 +3,9 @@
   # working dir (this will be used for all paths below)
   :wdir: '.'
   # fasta with sequences
-  :fasta: 'pfamseq_snip.fa'
+  :fasta: <PATH-TO-FASTA>
   # pfam file (model files)
-  :dir:  'pfam_scan_db'
+  :dir:  <PATH-TO-PFAM-MODEL-DIR>
   # tmp folder with fasta chunks
   :fadir:  'fas'
   # tmp folder with pfsout files (pfamscan output chunks)
@@ -24,8 +24,8 @@
 
 :pfamscan:
   # pfam scan binary (path-to-executable if not in $PATH)
-  :bin:  pfamScan
+  :bin:  <PATH-TO-PFAMSCAN.PL>
   # map Pfam hits to clans
   :clans: true
   # max. number of CPUs (per thread)
-  :cpu:  1
+  :cpu:  4
