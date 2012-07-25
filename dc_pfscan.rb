@@ -53,7 +53,6 @@ def split_fasta(config)
   puts "="*25
   print "\rSplitting [part %8d] %s [%#{width}d]... " % [outfiles.size,  config[:files][:fasta], in_file_no]
   IO.foreach(fasta) do |line|
-    #if (/^>.+/.match(line))
     if (line[0] == '>')
       if (in_file_no >= chunk_size)
         out_file.puts ""
@@ -136,7 +135,7 @@ def merge_results(infiles, config)
   infiles.each do |f|
     IO.foreach(f) do |line|
       next if /^$/.match(line)
-      next if /^#.*/.match(line) && (not first)
+      next if line[1] == '#' && (not first)
       outfile.puts line
       print "\rMerging result %#{width}d of %d... " % [current_merge+=1, infiles.size]
     end
