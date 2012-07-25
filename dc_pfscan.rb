@@ -21,7 +21,7 @@ require 'fileutils'
 # The consequence of running seperate threads is that the order of
 # the output will be jumbled (that is, as the runtime of pfam_scan
 # will depend on sequence length & composition, number of hits etc
-# chunks that were started later may be finished earlier.)
+# such that chunks that were started later may be finished earlier.)
 # That is to say that the *order* of hits obtained when running dc_pfscan
 # and pfam_scan will likely be different.
 
