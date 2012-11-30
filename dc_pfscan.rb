@@ -19,11 +19,11 @@ require 'fileutils'
 #
 # NOTE:
 # The consequence of running seperate threads is that the order of
-# the output will be jumbled (that is, as the runtime of pfam_scan
+# the output may be jumbled (that is, as the runtime of pfam_scan
 # will depend on sequence length & composition, number of hits etc
 # such that chunks that were started later may be finished earlier.)
 # That is to say that the *order* of hits obtained when running dc_pfscan
-# and pfam_scan will likely be different.
+# and pfam_scan may be different.
 
 
 # Mixin to count number of digits
@@ -157,6 +157,59 @@ def merge_results(infiles, config)
   puts "\rMerging result %#{width}d of %d... done." % [current_merge, infiles.size]
   puts ""
   outfile.close()
+  return outfile.path
+end
+
+# CREATE XDOM FILE FROM SCAN RESULTS
+def create_xdom(result_file, config)
+  puts "\nD. CREATING XDOM FILE... "
+  if (config[:parsepfs][:filename].nil?)
+    xdom_file = File.basename(config[:files][:fasta], ".*")
+    outfile = File.new("#{xdom_file}.xdom", "w")
+  else
+    outfile = File.new(config[:parsepfs][:filename], "w")
+  end
+
+  dom_start_field = (config[:parsepfs][:envelope]) ? 2 : 3
+  dom_end_field = (config[:parsepfs][:envelope]) ? 3 : 4
+  dom_name_field = (config[:parsepfs][:acc]) ? 5 : 6
+  consider_clans = config[:parsepfs][:clans]
+  pid_regexp = config[:parsepfs][:PIDregexp]
+  remove_empty = config[:parsepfs][:rempty]
+
+  current_id = nil 
+  last_id = nil 
+  current_xdom = Array.new
+
+  IO.foreach(result_file) {|line|
+    next if (line[0] == '#')
+    if m = pid_regexp.match(line)
+      fields = line.chomp!.split
+      current_id = m[1]
+      if current_id != last_id
+        if (config[:parsepfs][:remove_empty])
+          current_xdom = remove_overlaps(current_xdom)
+        end
+        outfile.puts current_xdom.join("\n") unless (remove_empty and current_xdom.length == 1)
+        last_id = current_id
+        current_xdom = []
+        current_xdom << ">#{current_id}"
+      end 
+      current_xdom << ">#{current_id}" if current_xdom.nil?
+      name = fields[dom_name_field]
+      if (consider_clans)
+        unless(fields[14] == 'No_clan')
+          name = fields[14]
+        end
+      end
+      next if ( (not config[:parsepfs][:cutoff].nil? ) and (fields[12].to_f > config[:parsepfs][:cutoff]) )
+      current_xdom << "#{fields[dom_start_field]}\t#{fields[dom_end_field]}\t#{name}\t#{fields[12]}"
+      last_id = current_id
+    end 
+  }
+  outfile.puts current_xdom.join("\n") unless (remove_empty and current_xdom.length == 1)
+  outfile.close
+  puts "\rD. CREATING XDOM FILE... done"
 end
 
 
@@ -168,7 +221,13 @@ def main
   config = read_config()
   outfiles = split_fasta(config)
   outfiles = run_pfamscan(outfiles, config)
-  merge_results(outfiles, config)
+  result_file = merge_results(outfiles, config)
+  create_xdom(result_file, config) if (config[:files][:parse])
 end
 
 if ARGV.length == 1 then main() else puts "Usage: #{$0} <path-to-config.yaml>" end
+
+
+#### OVERLAP RESOLUTION ####
+
+
