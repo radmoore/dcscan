@@ -1,4 +1,5 @@
 #!/usr/bin/ruby1.9.1
+
 require 'thread'
 require 'yaml'
 require 'fileutils'
@@ -162,7 +163,8 @@ end
 
 # CREATE XDOM FILE FROM SCAN RESULTS
 def create_xdom(result_file, config)
-  puts "\nD. CREATING XDOM FILE... "
+  puts "\nD. CREATING XDOM FILE"
+  puts "="*25
   if (config[:parsepfs][:filename].nil?)
     xdom_file = File.basename(config[:files][:fasta], ".*")
     outfile = File.new("#{xdom_file}.xdom", "w")
@@ -177,42 +179,65 @@ def create_xdom(result_file, config)
   pid_regexp = config[:parsepfs][:PIDregexp]
   remove_empty = config[:parsepfs][:rempty]
 
+  count = 0
   current_id = nil 
   last_id = nil 
   current_xdom = Array.new
 
   IO.foreach(result_file) {|line|
     next if (line[0] == '#')
+
     if m = pid_regexp.match(line)
       fields = line.chomp!.split
       current_id = m[1]
-      if current_id != last_id
-        if (config[:parsepfs][:remove_empty])
-          current_xdom = remove_overlaps(current_xdom)
+      if ( current_id != last_id and (not last_id.nil?) )
+        count += 1
+        print "\rParsing entry  %d... " % [count]
+        if (config[:parsepfs][:resolve_overlaps])
+          current_xdom = resolve_overlaps(current_xdom)
         end
         outfile.puts current_xdom.join("\n") unless (remove_empty and current_xdom.length == 1)
         last_id = current_id
-        current_xdom = []
-        current_xdom << ">#{current_id}"
+        current_xdom = [">#{current_id}"]
       end 
-      current_xdom << ">#{current_id}" if current_xdom.nil?
+      current_xdom << ">#{current_id}" if current_xdom.empty?
       name = fields[dom_name_field]
       if (consider_clans)
-        unless(fields[14] == 'No_clan')
-          name = fields[14]
-        end
+         name = fields[14] unless(fields[14] == 'No_clan')
       end
       next if ( (not config[:parsepfs][:cutoff].nil? ) and (fields[12].to_f > config[:parsepfs][:cutoff]) )
       current_xdom << "#{fields[dom_start_field]}\t#{fields[dom_end_field]}\t#{name}\t#{fields[12]}"
       last_id = current_id
     end 
   }
+  if (config[:parsepfs][:resolve_overlaps])
+    current_xdom = resolve_overlaps(current_xdom)
+  end
   outfile.puts current_xdom.join("\n") unless (remove_empty and current_xdom.length == 1)
   outfile.close
-  puts "\rD. CREATING XDOM FILE... done"
+  print "\rParsing entry  %d... done\n\n" % [count]
 end
 
+#### OVERLAP RESOLUTION ####
+def resolve_overlaps(xdom_array)
+  return xdom_array if (xdom_array.length == 2)
+  prev_pos = 1
+  current_pos = 2 
+  loop do 
+    break if (current_pos > xdom_array.length-1)
+    current_line = xdom_array[current_pos].split
+    prev_line = xdom_array[prev_pos].split
+    if (current_line[0].to_i <= prev_line[1].to_i)
+      (prev_line[3].to_f <= current_line[3].to_f) ? xdom_array.delete_at(current_pos) : xdom_array.delete_at(prev_pos)
+      next
+    end
+    prev_pos += 1
+    current_pos += 1
+  end
+  return xdom_array
+end
 
+### MAIN ###
 def main
   if RUBY_VERSION.to_f < 1.9
     STDERR.puts "Requires >= Ruby 1.9 (running version #{RUBY_VERSION})"
@@ -226,8 +251,4 @@ def main
 end
 
 if ARGV.length == 1 then main() else puts "Usage: #{$0} <path-to-config.yaml>" end
-
-
-#### OVERLAP RESOLUTION ####
-
 

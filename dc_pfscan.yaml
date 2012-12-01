@@ -3,13 +3,13 @@
   # working dir (this will be used for all paths below)
   :wdir: '.'
   # fasta with sequences
-  :fasta: 'uniprot_sprot.fasta_snip'
+  :fasta: <PATH-TO-FASTA-FILE>
   # pfam file (model files)
-  :dir: '../pfam_scan_db'
+  :dir: <PATH-TO-PFAM-SCAN-FILES>
   # tmp folder with fasta chunks
-  :fadir:  'fas'
+  :fadir: 'fas'
   # tmp folder with pfsout files (pfamscan output chunks)
-  :pfsdir:  'pfs'
+  :pfsdir: 'pfs'
   # the final outfile (if not set, will be == inputfile with 'pfsout' suffix)
   :resultfile:
   # remove all temp. files (chunks) and folders (true of false)
@@ -24,9 +24,9 @@
   # regular experession describing the protein ID match (must define one match group)
   :PIDregexp: !ruby/regexp '/sp\|(\w+)\|.+/'
   # use HMM accession (default: name)
-  :acc: true
+  :acc: false
   # use clan accession instead of HMM name/acc where available
-  :clans: true
+  :clans: false
   # use envelope co-ordinates (default: alignment)
   :envelope: false
   # use this as E-value (inclusive) cutoff (default: all matches considered)
@@ -39,13 +39,13 @@
 # no need to adjust here
 :jobcontrol: 
   # number of sequences per chunk
-  :chunk_size: 10
+  :chunk_size: 1000
   # max number of parallel threads
   :max_thread: 8      
 
 :pfamscan:
   # pfam scan binary (path-to-executable if not in $PATH)
-  :bin:  '/usr/share/PfamScan/pfam_scan.pl'
+  :bin: <PATH-TO-PFAM_SCAN.PL> 
   # map Pfam hits to clans
   :clans: true
   # max. number of CPUs (per thread)
